@@ -78,18 +78,21 @@
     if (el['screen-game']) el['screen-game'].classList.toggle('is-loading', pendingLoads > 0);
   }
 
-  function ensure(url, cb) {
+  function ensure(url, cb, forceRetry) {
     if (!url) { if (cb) cb(false); return; }
     var entry = assets[url];
+    /* 之前失败过的：这次要用就先作废重来，不能一条命判死 */
+    if (entry && entry.status === 'fail' && forceRetry) { delete assets[url]; entry = null; }
     if (entry) {
       if (entry.status === 'loading') { if (cb) entry.cbs.push(cb); }
       else if (cb) cb(entry.status === 'ok');
       return;
     }
+
     entry = assets[url] = { status: 'loading', cbs: cb ? [cb] : [] };
     var settled = false;
 
-    function done(ok) {
+    function settle(ok) {
       if (settled) return;
       settled = true;
       entry.status = ok ? 'ok' : 'fail';
@@ -100,9 +103,8 @@
     }
 
     var img = new global.Image();
-    img.onload = function () { done(true); };
-    img.onerror = function () { done(false); };
-    global.setTimeout(function () { done(false); }, 15000);   /* 超时兜底，绝不把剧情卡死 */
+    img.onload = function () { settle(true); };
+    img.onerror = function () { settle(false); };
     bumpLoading(1);
     img.src = url;
   }
@@ -118,12 +120,22 @@
   }
 
   /* ---------------- 视觉层 ---------------- */
+  /* 关键：切图绝不"等网络"——图到了就平滑交叉淡入；
+     万一没到，最多等 grace 毫秒就先把图层指过去（浏览器解码完自然会画出来），
+     否则一旦请求失败/超时，玩家就会看到"这一页没有照片"。 */
+  var SWITCH_GRACE = 1200;
+
   function setBg(step, instant) {
     var mine = ++bgSeq;
     if (instant) { applyBg(step, true); return; }
-    ensure(step.bg, function (ok) {
-      if (ok && mine === bgSeq) applyBg(step, false);
-    });
+    var done = false;
+    function go() {
+      if (done || mine !== bgSeq) return;
+      done = true;
+      applyBg(step, false);
+    }
+    ensure(step.bg, go, true);
+    global.setTimeout(go, SWITCH_GRACE);
   }
 
   function applyBg(step, instant) {
@@ -154,9 +166,14 @@
   function setCg(step, instant) {
     var mine = ++cgSeq;
     if (instant) { applyCg(step, true); return; }
-    ensure(step.cg, function (ok) {
-      if (ok && mine === cgSeq) applyCg(step, false);
-    });
+    var done = false;
+    function go() {
+      if (done || mine !== cgSeq) return;
+      done = true;
+      applyCg(step, false);
+    }
+    ensure(step.cg, go, true);
+    global.setTimeout(go, SWITCH_GRACE);
   }
 
   function applyCg(step, instant) {

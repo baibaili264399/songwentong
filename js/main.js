@@ -45,6 +45,7 @@
     el['screen-title'].classList.toggle('is-active', name === 'title');
     el['screen-game'].classList.toggle('is-active', name === 'game');
     if (name === 'game') state.enterGameAt = Date.now();
+    if (dustApi) { if (name === 'title') dustApi.start(); else dustApi.stop(); }
     refreshTitleState();
   }
 
@@ -568,13 +569,20 @@
     });
   }
 
-  /* ---------------- 粒子背景 ---------------- */
+  /* ---------------- 粒子背景 ----------------
+     只在标题页跑：剧情页根本看不见它，之前却一直在每帧重绘（手机上一直烧 CPU/GPU）。 */
+  var dustApi = null;
+
   function initDust() {
     var canvas = el['dust'];
     if (!canvas || !canvas.getContext) return;
     var ctx = canvas.getContext('2d');
     var dpr = Math.min(global.devicePixelRatio || 1, 2);
     var motes = [], w = 1, h = 1;
+    var raf = 0, running = false, last = 0;
+    var isTouch = !!(GAL.Mobile && GAL.Mobile.isTouch);
+    var minGap = isTouch ? 34 : 0;          /* 触屏降到 ~30fps */
+    var density = isTouch ? 40 : 24;
 
     function measure() {
       var rect = canvas.getBoundingClientRect();
@@ -586,7 +594,7 @@
     }
 
     function spawn() {
-      var count = Math.round(w / 24) + 16;
+      var count = Math.round(w / density) + (isTouch ? 10 : 16);
       motes = [];
       for (var i = 0; i < count; i++) {
         motes.push({
@@ -600,11 +608,17 @@
       }
     }
 
-    measure();
-    spawn();
-    global.addEventListener('resize', function () { measure(); spawn(); });
+    function active() {
+      return !document.hidden &&
+        el['screen-title'] && el['screen-title'].classList.contains('is-active');
+    }
 
-    (function loop() {
+    function frame(ts) {
+      if (!active()) { running = false; raf = 0; return; }
+      raf = global.requestAnimationFrame(frame);
+      if (minGap && ts - last < minGap) return;
+      last = ts;
+
       ctx.clearRect(0, 0, w, h);
       for (var i = 0; i < motes.length; i++) {
         var m = motes[i];
@@ -617,8 +631,31 @@
         ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
         ctx.fill();
       }
-      global.requestAnimationFrame(loop);
-    })();
+    }
+
+    function start() {
+      if (running || !active()) return;
+      running = true;
+      last = 0;
+      raf = global.requestAnimationFrame(frame);
+    }
+
+    function stop() {
+      running = false;
+      if (raf) global.cancelAnimationFrame(raf);
+      raf = 0;
+    }
+
+    measure();
+    spawn();
+    global.addEventListener('resize', function () { measure(); spawn(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop();
+      else if (state.screen === 'title') start();
+    });
+
+    dustApi = { start: start, stop: stop };
+    start();
   }
 
   /* ---------------- 轻微视差 ---------------- */
@@ -730,6 +767,7 @@
       enterBoot();
       if (hash === 'selftest') { runSelfTest(); return; }
       if (hash === 'measure') { measureLayout(); return; }
+      if (hash === 'bgtest') { runBgTest(); return; }
       if (jumpStep !== null) { startChapter('ch1', jumpStep); return; }
       if (hash === 'game') actions['new']();
       else if (hash === 'log') {
@@ -750,6 +788,48 @@
       else if (hash === 'settings') actions['settings']();
       else if (hash === 'about') actions['about']();
     }, 60);
+  }
+
+  /* 背景加载自检：故意让 Image 永远不回调，验证"图没到也必须把图层指过去" */
+  function runBgTest() {
+    var log = [];
+    var RealImage = global.Image;
+    Settings.set('textSpeed', 100);
+
+    /* 1) 正常情况：能立刻拿到图 */
+    startChapter('ch1', 5);
+    global.setTimeout(function () {
+      var on = pickOnLayer();
+      log.push('正常加载: ' + (on && /bg-bench-close/.test(on.style.backgroundImage) ? 'PASS' : 'FAIL'));
+
+      /* 2) 模拟图片永远加载不出来（不触发 onload / onerror） */
+      global.Image = function () {
+        var self = this;
+        this.onload = null;
+        this.onerror = null;
+        Object.defineProperty(this, 'src', { set: function () {}, get: function () { return ''; } });
+        return self;
+      };
+      GAL.VN.start('ch1', 0);
+      GAL.VN.state.index = 8;    /* 停在第 8 步（bg-path 的前一句），下一步就是切图 */
+      GAL.VN.advance();
+      global.setTimeout(function () {
+        var on2 = pickOnLayer();
+        var url = on2 ? on2.style.backgroundImage : '';
+        log.push('图卡住时翻页: ' + (/bg-path/.test(url) ? 'PASS' : 'FAIL') + ' (' + url.slice(0, 46) + ')');
+        global.Image = RealImage;
+        var failed = log.filter(function (l) { return l.indexOf('FAIL') > -1; }).length;
+        document.body.setAttribute('data-bgtest', 'FAILED=' + failed + ' || ' + log.join(' || '));
+      }, 2000);
+    }, 1500);
+  }
+
+  function pickOnLayer() {
+    var a = document.getElementById('vn-bg-a');
+    var b = document.getElementById('vn-bg-b');
+    if (a && a.classList.contains('is-on')) return a;
+    if (b && b.classList.contains('is-on')) return b;
+    return a || b;
   }
 
   /* 布局量测（开发用）：把关键元素的实际几何写进 body[data-measure] */
