@@ -918,67 +918,120 @@ body.is-touch .hint-touch { display: inline; }
   opacity: .75;
 }
 
-/* ---------------- 竖屏提示覆盖层 ---------------- */
-.rotate-hint {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: none;
-  /* 用 flex 而不是 grid：grid 的 auto 轨道会被 max-content 撑破，导致长文案溢出屏幕 */
-  align-items: center;
-  justify-content: center;
-  padding: 24px calc(24px + env(safe-area-inset-right)) 24px calc(24px + env(safe-area-inset-left));
-  text-align: center;
-  background: radial-gradient(80% 70% at 50% 45%, #0b1424, #03060c 78%);
-  cursor: pointer;
+/* ---------------- 竖屏兜底：把整个画面旋转 90° ----------------
+   不依赖任何 API：系统锁了旋转方向、微信内置浏览器、iOS 都不给方向锁权限，
+   竖屏时直接把 #app 转 90°、并把舞台按"逻辑横屏"重新计算，用户把手机转过来就是横屏。 */
+body.force-landscape #app {
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 100vw;
+  padding: 0;
+  transform: translate(-50%, -50%) rotate(90deg);
 }
-body.needs-rotate .rotate-hint { display: flex; }
-body.allow-portrait .rotate-hint { display: none; }
+body.force-landscape .stage {
+  --vh: 100vw;                              /* 逻辑高度 = 物理宽度 */
+  --sw: min(100vh, calc(100vw * 1.7778));   /* 逻辑宽度 = 物理高度 */
+}
+@supports (width: 100dvh) {
+  body.force-landscape #app { width: 100dvh; height: 100dvw; }
+  body.force-landscape .stage {
+    --vh: 100dvw;
+    --sw: min(100dvh, calc(100dvw * 1.7778));
+  }
+}
 
-.rotate-inner { width: 100%; max-width: 320px; }
-.rotate-phone {
-  width: 44px;
-  height: 74px;
-  margin: 0 auto 22px;
+/* ---------------- 竖屏提示条（不挡操作） ---------------- */
+.rotate-bar {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--u) * 1.2);
+  transform: translateX(-50%);
+  z-index: 210;
+  display: none;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * .9) calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: .08em;
+  color: #dbeaff;
+  white-space: nowrap;
+  background: rgba(6, 12, 22, .92);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  border-radius: 3px;
+  box-shadow: 0 calc(var(--u) * .6) calc(var(--u) * 2.4) rgba(0, 0, 0, .6);
+}
+body.show-rotate-bar .rotate-bar { display: flex; }
+.rotate-bar-icon {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 1.1);
+  height: calc(var(--u) * 1.9);
   border: 2px solid var(--cyan);
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(127, 212, 255, .55);
+  border-radius: 3px;
+  box-shadow: 0 0 calc(var(--u) * .8) rgba(127, 212, 255, .6);
   animation: rotatePhone 2.2s ease-in-out infinite;
 }
 @keyframes rotatePhone {
   0%, 18%   { transform: rotate(0deg); }
   62%, 100% { transform: rotate(-90deg); }
 }
-.rotate-title { margin: 0 0 12px; font-size: 20px; font-weight: 600; letter-spacing: .24em; color: #eaf4ff; }
-.rotate-text { margin: 0 0 24px; font-size: 13px; line-height: 1.95; color: var(--ink-dim); word-break: break-word; }
-.rotate-btn {
-  display: inline-block;
-  padding: 13px 24px;
+.rotate-bar-btn {
+  padding: calc(var(--u) * .55) calc(var(--u) * 1.3);
   font: inherit;
-  font-size: 15px;
-  letter-spacing: .14em;
+  font-size: calc(var(--u) * 1.25);
+  letter-spacing: .12em;
   color: #06121f;
   cursor: pointer;
   background: linear-gradient(180deg, #bfe6ff, #7fd4ff);
   border: 0;
-  border-radius: 3px;
-  box-shadow: 0 0 22px rgba(127, 212, 255, .45);
+  border-radius: 2px;
 }
-.rotate-btn:active { transform: scale(.97); }
-.rotate-skip {
-  display: block;
-  margin: 18px auto 0;
-  padding: 8px 10px;
+.rotate-bar-close {
+  padding: 0 calc(var(--u) * .3);
   font: inherit;
-  font-size: 12px;
-  letter-spacing: .1em;
-  color: var(--ink-faint);
+  font-size: calc(var(--u) * 1.4);
+  line-height: 1;
+  color: var(--ink-dim);
   cursor: pointer;
   background: none;
   border: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
+body.is-wechat .rotate-bar-text::after {
+  content: "（微信里可能全屏不了：右上角「···」→ 在浏览器打开）";
+  color: #ffd08a;
+}
+
+/* ---------------- 素材加载提示 ---------------- */
+.vn-loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 44;
+  display: none;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * .9) calc(var(--u) * 1.8);
+  font-size: calc(var(--u) * 1.35);
+  letter-spacing: .16em;
+  color: #dbeaff;
+  background: rgba(6, 12, 22, .86);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.screen-vn.is-loading .vn-loading { display: flex; }
+.vn-loading::before {
+  content: "";
+  width: calc(var(--u) * 1.5);
+  height: calc(var(--u) * 1.5);
+  border: 2px solid rgba(127, 212, 255, .25);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: vnSpin 1s linear infinite;
+}
+@keyframes vnSpin { to { transform: rotate(360deg); } }
 
 /* ---------------- 触屏设备：整体放大字号与热区 ----------------
    手机横屏时舞台宽度只有 640~900px，--u 只有 6~9px，

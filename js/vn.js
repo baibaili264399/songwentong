@@ -66,8 +66,67 @@
     el['hud-line'].textContent = p.now + ' / ' + p.total;
   }
 
+  /* ---------------- 素材缓存 / 预加载 ----------------
+     开章就把本章用到的图全部拉一遍，玩家读到那一句时基本已经就绪；
+     切换背景 / CG 时如果图还没到，会等它到了再切（并显示"读取素材中"），不会先黑一下。 */
+  var assets = {};
+  var pendingLoads = 0;
+  var bgSeq = 0, cgSeq = 0;
+
+  function bumpLoading(delta) {
+    pendingLoads = Math.max(0, pendingLoads + delta);
+    if (el['screen-game']) el['screen-game'].classList.toggle('is-loading', pendingLoads > 0);
+  }
+
+  function ensure(url, cb) {
+    if (!url) { if (cb) cb(false); return; }
+    var entry = assets[url];
+    if (entry) {
+      if (entry.status === 'loading') { if (cb) entry.cbs.push(cb); }
+      else if (cb) cb(entry.status === 'ok');
+      return;
+    }
+    entry = assets[url] = { status: 'loading', cbs: cb ? [cb] : [] };
+    var settled = false;
+
+    function done(ok) {
+      if (settled) return;
+      settled = true;
+      entry.status = ok ? 'ok' : 'fail';
+      bumpLoading(-1);
+      var list = entry.cbs;
+      entry.cbs = [];
+      list.forEach(function (fn) { try { fn(ok); } catch (e) { /* ignore */ } });
+    }
+
+    var img = new global.Image();
+    img.onload = function () { done(true); };
+    img.onerror = function () { done(false); };
+    global.setTimeout(function () { done(false); }, 15000);   /* 超时兜底，绝不把剧情卡死 */
+    bumpLoading(1);
+    img.src = url;
+  }
+
+  function preloadChapter() {
+    var wanted = {};
+    state.steps.forEach(function (s) {
+      if (s.bg) wanted[s.bg] = 1;
+      if (s.cg) wanted[s.cg] = 1;
+      if (s.char) wanted[s.char] = 1;
+    });
+    Object.keys(wanted).forEach(function (u) { ensure(u); });
+  }
+
   /* ---------------- 视觉层 ---------------- */
   function setBg(step, instant) {
+    var mine = ++bgSeq;
+    if (instant) { applyBg(step, true); return; }
+    ensure(step.bg, function (ok) {
+      if (ok && mine === bgSeq) applyBg(step, false);
+    });
+  }
+
+  function applyBg(step, instant) {
     var layers = [el['vn-bg-a'], el['vn-bg-b']];
     var cur = layers[state.bgSlot];
     var next = layers[1 - state.bgSlot];
@@ -93,6 +152,14 @@
   }
 
   function setCg(step, instant) {
+    var mine = ++cgSeq;
+    if (instant) { applyCg(step, true); return; }
+    ensure(step.cg, function (ok) {
+      if (ok && mine === cgSeq) applyCg(step, false);
+    });
+  }
+
+  function applyCg(step, instant) {
     var node = el['vn-cg'];
     el['vn-cg-img'].src = step.cg;
     node.dataset.mode = step.mode || 'inset';
@@ -105,6 +172,7 @@
   }
 
   function closeCg(instant) {
+    cgSeq++;
     var node = el['vn-cg'];
     node.style.transitionDuration = (instant ? 0 : 420) + 'ms';
     node.classList.remove('is-on', 'is-zoom');
@@ -185,6 +253,7 @@
   }
 
   function resetVisual() {
+    bgSeq++;                       /* 作废还没回来的背景加载回调 */
     [el['vn-bg-a'], el['vn-bg-b']].forEach(function (l) {
       l.classList.remove('is-on', 'is-pan');
       l.style.backgroundImage = '';
@@ -493,6 +562,8 @@
     $$('[data-action="vn-auto"],[data-action="vn-skip"]').forEach(function (b) { b.classList.remove('is-active'); });
 
     if (el['hud-chapter']) el['hud-chapter'].textContent = ch.title;
+
+    preloadChapter();              /* 本章素材提前拉，读到那一句时基本已就绪 */
 
     var target = (typeof step === 'number' && step >= 0 && step < ch.steps.length) ? step : 0;
     if (target > 0) {

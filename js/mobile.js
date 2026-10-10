@@ -1,16 +1,19 @@
 /* ============================================================
    《错位夜宵》移动端适配
    - 触摸设备识别：body.is-touch → 放大字号与触控热区
-   - 竖屏兜底：body.needs-rotate → 显示"请横屏"覆盖层（iOS 无法强制横屏时用）
-   - 首次点击接管：进入全屏 + 锁定横屏（Android Chrome / Edge 可用）
+   - 横屏兜底：竖屏时给 body 加 force-landscape，由 CSS 把整个 #app 旋转 90°。
+     这样即使系统锁了旋转方向、或在微信内置浏览器里（都不给方向锁权限），
+     用户把手机转过来也照样是横屏全屏游玩。
+   - 全屏 / 方向锁：能在用户手势里调用就顺手调用，失败也不影响上面这条兜底。
    ============================================================ */
 (function (global) {
   'use strict';
   var GAL = global.GAL || (global.GAL = {});
   var doc = global.document;
-  var body = doc.body;
 
-  var forced = null; /* 'mobile' | 'desktop' | null */
+  var forced = null;          /* 'mobile' | 'desktop' | null（调试锚点用） */
+  var barDismissed = false;
+  var barTimer = null;
 
   function mq(query, fallback) {
     try { return !!global.matchMedia(query).matches; } catch (e) { return fallback; }
@@ -28,31 +31,48 @@
 
   var Mobile = {
     isTouch: false,
-    allowPortrait: false,
+    isPortrait: false,
 
-    /* 供调试锚点强制切换：#mobile / #desktop */
+    /* 调试锚点：#mobile / #desktop */
     force: function (mode) {
       forced = (mode === 'mobile' || mode === 'desktop') ? mode : null;
       this.apply();
     },
 
     apply: function () {
+      var body = doc.body;
+      if (!body) return;
       this.isTouch = detectTouch();
       body.classList.toggle('is-touch', this.isTouch);
+      try {
+        body.classList.toggle('is-wechat', /MicroMessenger/i.test(global.navigator.userAgent || ''));
+      } catch (e) { /* ignore */ }
       this.syncOrientation();
     },
 
     syncOrientation: function () {
+      var body = doc.body;
+      if (!body) return;
       var portrait = mq('(orientation: portrait)', global.innerHeight > global.innerWidth);
+      this.isPortrait = portrait;
+
+      /* 竖屏就把画面转过来（纯 CSS，永远有效） */
       body.classList.toggle('is-portrait', portrait);
-      body.classList.toggle('needs-rotate', this.isTouch && portrait && !this.allowPortrait);
+      body.classList.toggle('force-landscape', this.isTouch && portrait);
+
+      /* 提示条：只在竖屏且用户没关掉时出现 */
+      var showBar = this.isTouch && portrait && !barDismissed;
+      body.classList.toggle('show-rotate-bar', showBar);
+      if (showBar) {
+        global.clearTimeout(barTimer);
+        barTimer = global.setTimeout(function () { Mobile.dismissBar(); }, 12000);
+      }
     },
 
-    /* 竖屏也能玩（用户主动选择后的降级） */
-    playInPortrait: function () {
-      this.allowPortrait = true;
-      body.classList.add('allow-portrait');
-      this.syncOrientation();
+    dismissBar: function () {
+      barDismissed = true;
+      global.clearTimeout(barTimer);
+      doc.body.classList.remove('show-rotate-bar');
     },
 
     /* 必须在用户手势回调里调用 */
@@ -64,10 +84,9 @@
       if (req && !already) {
         try {
           var p = req.call(el);
-          if (p && p.catch) p.catch(function () { /* 用户拒绝或环境不支持，静默 */ });
+          if (p && p.catch) p.catch(function () { /* 微信/ iOS 会拒绝，忽略即可 */ });
         } catch (e) { /* ignore */ }
       }
-      /* 全屏生效后再锁方向，否则部分浏览器会直接拒绝 */
       global.setTimeout(function () { Mobile.lockLandscape(); }, 180);
     },
 
@@ -76,7 +95,7 @@
       if (!so || typeof so.lock !== 'function') return false;
       try {
         var p = so.lock('landscape');
-        if (p && p.catch) p.catch(function () { /* iOS / 非全屏时会被拒绝 */ });
+        if (p && p.catch) p.catch(function () { /* 非全屏时会被拒绝 */ });
         return true;
       } catch (e) { return false; }
     },
@@ -86,6 +105,9 @@
     }
   };
 
+  /* 先在解析阶段跑一次（脚本在 body 末尾），尽量减少竖屏布局的闪一下 */
+  Mobile.apply();
+
   function bind() {
     Mobile.apply();
 
@@ -94,10 +116,10 @@
       global.setTimeout(function () { Mobile.syncOrientation(); }, 260);
     });
 
-    var hint = doc.getElementById('rotate-hint');
-    if (hint) {
-      hint.addEventListener('click', function (e) {
-        if (e.target.closest('[data-rotate-skip]')) return;
+    var fsBtn = doc.getElementById('rotate-fullscreen');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
         Mobile.requestImmersive();
       });
     }
@@ -105,8 +127,7 @@
     if (skip) {
       skip.addEventListener('click', function (e) {
         e.stopPropagation();
-        Mobile.playInPortrait();
-        if (GAL.toast) GAL.toast('已切换为竖屏模式（体验可能不佳）', 'warn');
+        Mobile.dismissBar();
       });
     }
 

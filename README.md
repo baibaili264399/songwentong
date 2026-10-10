@@ -53,15 +53,16 @@ python -m http.server 8123
 ├─ js/mobile.js                移动端适配：触屏识别 / 全屏横屏接管 / 竖屏提示
 ├─ js/main.js                  屏幕切换、菜单交互、存档面板、设置面板
 ├─ assets/images/fish.png      占位立绘（大肥鱼），同时用作 PWA 图标
-├─ assets/scene/               实拍素材（背景 / CG，共 16 张，已压缩）
-│   ├─ bg-bench-close.jpg      第一人称坐在长椅上（开场）
-│   ├─ bg-path.jpg             林荫步道（抬头四顾）
-│   ├─ bg-ground.jpg           脚下地砖（眩晕/低头）
-│   ├─ cg-phone.jpg            手机屏幕特写（14:47）
-│   ├─ cg-phone-dark.jpg       掏出手机（息屏）
-│   ├─ cg-bench-view.jpg       第一视角远望
-│   ├─ cg-hand*.jpg            手部特写
-│   └─ bg-canteen*.jpg         南食堂（后续章节用）
+├─ assets/scene/               实拍素材（背景 / CG，全部 WebP，共 17 张 2.4MB）
+│   ├─ bg-room-night.webp      深夜出租屋 · 显示器幽光（前情提要）
+│   ├─ bg-bench-close.webp     第一人称坐在长椅上（开场）
+│   ├─ bg-path.webp            林荫步道（抬头四顾）
+│   ├─ bg-ground.webp          脚下地砖（眩晕/低头）
+│   ├─ cg-phone.webp           手机屏幕特写（14:47）
+│   ├─ cg-phone-dark.webp      掏出手机（息屏）
+│   ├─ cg-bench-view.webp      第一视角远望
+│   ├─ cg-hand*.webp           手部特写
+│   └─ bg-canteen*.webp        南食堂（后续章节用）
 └─ docs/
    ├─ 设定集.md                 世界观 / 系统 / 三男主 / 场景 / 剧情结构（全部已敲定设定）
    ├─ 序章脚本.md               序章正式脚本（叙事 + 镜头 + 台词 + 旁白）
@@ -69,8 +70,9 @@ python -m http.server 8123
    └─ preview/                 各界面预览截图（含手机横屏 / 竖屏 / 剧情演出）
 ```
 
-> 所有资源都是相对路径（`css/…`、`js/…`、`assets/…`），因此放在
-> `https://<用户名>.github.io/songwentong/` 这种子路径下也能正常加载。
+> 素材全部压缩为 **WebP**（原 13.9MB 的实拍照片 → 2.4MB），并且引擎在**开章时就会把本章用到的图
+> 全部预加载**，读到那一句时基本已经就绪；万一还没到，会等图到了再切背景并显示"读取素材中"，
+> 不会先黑一下。所有资源都是相对路径，放在 `https://<用户名>.github.io/songwentong/` 这种子路径下也能正常加载。
 
 ## 三、本版本已实现
 
@@ -106,9 +108,15 @@ python -m http.server 8123
 
 **手机端**
 - 触屏识别（`pointer: coarse` / `ontouchstart` / `maxTouchPoints`）→ `body.is-touch`
-- 首次点击自动全屏 + 锁定横屏；支持 PWA 添加到主屏幕后横屏启动
-- 竖屏旋转提示层（含"仍然竖屏继续"降级）、双击缩放与下拉刷新屏蔽、安全区适配
+- **横屏兜底（重要）**：竖屏时给 `body` 加 `force-landscape`，由 CSS 把整个 `#app` **旋转 90°**、
+  并按"逻辑横屏"重算舞台尺寸。所以**即使系统锁了旋转方向、或在微信内置浏览器里**（这两者都不给
+  方向锁权限，`requestFullscreen` / `screen.orientation.lock` 会失败），把手机转过来照样是横屏全屏游玩。
+   - 首次点击"点击画面开始"时，仍会尝试原生全屏 + 锁定横屏（Android Chrome 上能去掉浏览器界面）
+   - 竖屏时顶部有一条不挡操作的提示条：「请把手机横过来」+「全屏」按钮（12 秒后自动收起）
+   - 微信里会额外提示「右上角「···」→ 在浏览器打开」
+- PWA：`manifest.json` 里 `"orientation": "landscape"`，Android 添加到主屏幕后点图标即横屏全屏启动
 - 剧情屏在手机上整体放大：对话框、右侧按钮、底部按钮、箭头都是可点热区
+- 禁用双击缩放、下拉刷新、长按选中与长按菜单；`viewport-fit=cover` + 安全区内缩
 
 ## 四、开发锚点（调试用，追加在 URL 后）
 
