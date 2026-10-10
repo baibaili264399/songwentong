@@ -144,6 +144,12 @@
     var next = layers[1 - state.bgSlot];
     var dur = instant ? 0 : (step.dur || 900);
 
+    /* 关键：清掉挂在这两个图层上的"淡出"定时器。
+       否则连续两次切图（<40ms）时，上一次的定时器会把新图层刚点亮的 is-on 又抹掉，
+       结果两层都透明 → 画面一片黑，看起来就是"这一页照片没变"。 */
+    if (next._hideTimer) { global.clearTimeout(next._hideTimer); next._hideTimer = null; }
+    if (cur._hideTimer) { global.clearTimeout(cur._hideTimer); cur._hideTimer = null; }
+
     next.style.transitionDuration = dur + 'ms';
     cur.style.transitionDuration = dur + 'ms';
     next.style.backgroundImage = 'url("' + step.bg + '")';
@@ -158,7 +164,10 @@
     if (dur === 0) {
       cur.classList.remove('is-on');
     } else {
-      global.setTimeout(function () { cur.classList.remove('is-on'); }, 40);
+      cur._hideTimer = global.setTimeout(function () {
+        cur.classList.remove('is-on');
+        cur._hideTimer = null;
+      }, 60);
     }
     state.bgSlot = 1 - state.bgSlot;
   }
@@ -291,19 +300,25 @@
   }
 
   /* ---------------- 执行步骤 ---------------- */
-  function applyVisual(step, instant) {
-    if (step.card != null) showCard(step, instant);
+  /* replay=true 表示"只是把状态倒回去"（点上一句 / 读档）：
+     只恢复持续性状态（背景 / CG / 立绘 / 辉光 / 闪回滤镜），
+     绝不重放一次性演出（章节卡、白闪、震屏、BUG 乱码）——
+     否则点一下"上一句"就会闪出"第一章"章节卡和白光。 */
+  function applyVisual(step, instant, replay) {
+    var oneShot = !!replay;
+
+    if (step.card != null && !oneShot) {
+      showCard(step, instant);
+      /* 章节卡播完自动收掉 */
+      state.cardTimer = global.setTimeout(function () { hideCard(false); }, instant ? 0 : (step.hold || 1800));
+    }
     if (step.bg) setBg(step, instant);
     if (step.cg) setCg(step, instant);
     if (step.cgOff) closeCg(instant);
     if (step.char !== undefined) setChar(step, instant);
-    if (step.flash) flash(step.flash, step.dur);
-    if (step.shake) shake(step.shake);
-    if (step.fx) setFx(step.fx, step.dur);
-    if (step.card != null) {
-      /* 章节卡播完自动收掉 */
-      state.cardTimer = global.setTimeout(function () { hideCard(false); }, instant ? 0 : (step.hold || 1800));
-    }
+    if (step.flash && !oneShot) flash(step.flash, step.dur);
+    if (step.shake && !oneShot) shake(step.shake);
+    if (step.fx && (!oneShot || step.fx !== 'glitch')) setFx(step.fx, step.dur);
   }
 
   /* 从 index 开始推进，直到停在需要点击的台词上 */
@@ -477,7 +492,8 @@
         continue;
       }
       if (s.end) continue;
-      applyVisual(s, true);
+      if (typeof s.wait === 'number') continue;
+      applyVisual(s, true, true);      /* replay：只恢复状态，不重放一次性演出 */
     }
   }
 

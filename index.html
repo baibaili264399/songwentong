@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>错位夜宵 · Galgame</title>
-<meta name="description" content="无 H · 校园向 · 三男主攻略 + 回归现实真结局的 Galgame" />
+<meta name="description" content="无 H · 校园向 · 三主角攻略 + 回归现实真结局的 Galgame" />
 <meta name="theme-color" content="#04060b" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -135,13 +135,9 @@
         <button class="vn-side-btn" type="button" data-action="vn-config"><b>设置</b><span>CONFIG</span></button>
       </div>
 
-      <!-- 左右翻页箭头 -->
-      <button class="vn-arrow is-left" type="button" data-action="vn-back" aria-label="上一句">‹</button>
-      <button class="vn-arrow is-right" type="button" data-action="vn-forward" aria-label="下一句">›</button>
-
       <!-- 对话框 -->
       <div class="dialogue vn-box" id="vn-box" data-kind="say">
-        <div class="name-box" id="speaker">男主</div>
+        <div class="name-box" id="speaker">主角</div>
         <div class="text-box">
           <span id="dialogue-text"></span><span class="caret" id="caret">▼</span>
         </div>
@@ -222,14 +218,16 @@
               <span class="track"><span class="thumb"></span></span>
               <span class="switch-label">自动存档</span>
             </label>
-            <span class="inline-actions">
-              <button class="btn" type="button" id="btn-fullscreen">切换全屏</button>
-              <button class="btn btn-ghost" type="button" id="btn-reset-settings">恢复默认设置</button>
-            </span>
+            <label class="switch">
+              <input type="checkbox" id="set-smooth" />
+              <span class="track"><span class="thumb"></span></span>
+              <span class="switch-label">流畅模式<span class="switch-tip">省电 · 关模糊与横移</span></span>
+            </label>
           </div>
         </div>
         <footer class="panel-foot">
-          <span class="storage-note">存档位：自动 1 个 + 手动 6 个</span>
+          <button class="btn btn-ghost" type="button" id="btn-fullscreen">切换全屏</button>
+          <button class="btn btn-ghost" type="button" id="btn-reset-settings">恢复默认设置</button>
           <button class="btn" type="button" data-close>完成</button>
         </footer>
       </div>
@@ -241,14 +239,14 @@
         <header class="panel-head">
           <div>
             <h2 id="about-title">关于《错位夜宵》</h2>
-            <p class="panel-hint">无 H · 校园向 · 三男主攻略 + 回归现实真结局</p>
+            <p class="panel-hint">无 H · 校园向 · 三主角攻略 + 回归现实真结局</p>
           </div>
           <button class="panel-close" type="button" data-close aria-label="关闭">✕</button>
         </header>
         <div class="panel-body about-body">
-          <p class="about-lead">熬夜通关了一款小众治愈系 Galgame，用仅剩的 11.30 元点了一份 9.9 元拼好饭炸鸡——第一口下去，他附身到了那款游戏的原作男主身上。</p>
+          <p class="about-lead">熬夜通关了一款小众治愈系 Galgame，用仅剩的 11.30 元点了一份 9.9 元拼好饭炸鸡——第一口下去，他附身到了那款游戏的原作主角身上。</p>
           <ul class="about-list">
-            <li><b>男主</b>：双记忆并存（现实 + 原作人生 + 全剧情攻略记忆）；心底可看见模糊好感提示；改动关键剧情会触发世界震荡 BUG；世界意志以梦境碎片暗示，无直接对话。</li>
+            <li><b>主角</b>：双记忆并存（现实 + 原作人生 + 全剧情攻略记忆）；心底可看见模糊好感提示；改动关键剧情会触发世界震荡 BUG；世界意志以梦境碎片暗示，无直接对话。</li>
             <li><b>可攻略角色</b>：郑桐（创伤温柔 · 社会学）、江灼（双重人格 · 新闻传播）、阿松（社恐电子幽灵 · 计算机）。</li>
             <li><b>舞台</b>：一所综合性大学——教室、走廊、图书馆、计算中心、体育场、大礼堂、宿舍、食堂、小卖部、雷锋雕像广场、健身楼、校内石桥。</li>
             <li><b>结局</b>：TRUE END【回归现实】 / STAY END【留下】，另有三条角色 BE。</li>

@@ -808,6 +808,7 @@ input[type="range"]:disabled::-webkit-slider-thumb { background: #55627a; box-sh
   box-shadow: 0 0 calc(var(--u) * 1.4) rgba(127, 212, 255, .9);
 }
 .switch input:focus-visible + .track { box-shadow: 0 0 0 calc(var(--u) * .3) rgba(127, 212, 255, .35); }
+.switch-tip { margin-left: calc(var(--u) * .5); font-size: .78em; color: var(--ink-dim); opacity: .72; }
 
 /* ---------------- 关于 ---------------- */
 .about-body { font-size: calc(var(--u) * 1.35); line-height: 1.9; }
@@ -1396,37 +1397,6 @@ body.is-touch .char-wrap { transition: none; }
 }
 .vn-side-btn.is-active span { color: rgba(6, 18, 31, .72); }
 
-/* ---- 左右翻页箭头 ---- */
-.vn-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: calc(var(--u) * 5);
-  height: calc(var(--u) * 5);
-  display: grid;
-  place-items: center;
-  padding: 0 0 calc(var(--u) * .3);
-  font: inherit;
-  font-size: calc(var(--u) * 3);
-  line-height: 1;
-  color: #dbeaff;
-  cursor: pointer;
-  background: radial-gradient(circle at 50% 50%, rgba(13, 23, 42, .88), rgba(8, 14, 26, .6));
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  z-index: 22;
-  transition: color .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
-}
-.vn-arrow.is-left { left: calc(var(--u) * .8); }
-.vn-arrow.is-right { right: calc(var(--u) * .8); }
-.vn-arrow:hover,
-.vn-arrow:focus-visible {
-  outline: none;
-  color: #fff;
-  border-color: var(--cyan);
-  box-shadow: 0 0 calc(var(--u) * 2) rgba(127, 212, 255, .5);
-}
-
 /* ---- 对话框 ---- */
 .dialogue.vn-box {
   left: calc(var(--u) * 6);
@@ -1507,9 +1477,6 @@ body.is-touch .vn-side { right: calc(var(--u) * 9.5); gap: calc(var(--u) * .9); 
 body.is-touch .vn-side-btn { width: calc(var(--u) * 11); padding: calc(var(--u) * 1.05) 0; }
 body.is-touch .vn-side-btn b { font-size: calc(var(--u) * 1.6); }
 body.is-touch .vn-side-btn span { font-size: calc(var(--u) * 1.05); }
-body.is-touch .vn-arrow { width: calc(var(--u) * 6.4); height: calc(var(--u) * 6.4); font-size: calc(var(--u) * 3.8); }
-body.is-touch .vn-arrow.is-left { left: calc(var(--u) * .6); }
-body.is-touch .vn-arrow.is-right { right: calc(var(--u) * .6); }
 body.is-touch .dialogue.vn-box {
   left: calc(var(--u) * 5);
   right: calc(var(--u) * 21);
@@ -1528,38 +1495,48 @@ body.is-touch .log-empty { font-size: calc(var(--u) * 1.6); }
 
 
 /* ============================================================
-   移动端性能：关掉最费电的几项，避免手机上玩一会儿就发烫
+   流畅模式（省电）：默认在触屏设备打开，设置面板可关
+   关掉的是"每帧都在花钱"的东西：
    1) backdrop-filter（全屏实时模糊）叠在不断打字的对话框上 → 每帧重新模糊，最烫的一项
    2) 大范围 filter: blur() + 常驻动画的环境层
    3) mix-blend-mode 全屏混合层（下面的图一动，它就要整屏重算）
-   4) 常驻的呼吸/浮动动画
+   4) 常驻的呼吸/浮动动画、场景横移镜头
+   5) 全屏交叉淡入的时间（两张满屏图同时合成的帧数）
    ============================================================ */
-body.is-touch .bg-ambient,
-body.is-touch .bg-lines { display: none; }
+body.smooth-mode .bg-ambient,
+body.smooth-mode .bg-lines { display: none; }
 
-body.is-touch .dialogue,
-body.is-touch .menu-item,
-body.is-touch .tag,
-body.is-touch .overlay,
-body.is-touch .vn-cg-scrim,
-body.is-touch .slot,
-body.is-touch .panel {
+/* 剧情页根本用不到标题页的背景层：直接不画（少好几层满屏合成） */
+body.is-playing .bg-ambient,
+body.is-playing .bg-lines,
+body.is-playing .bg-dust { display: none; }
+
+body.smooth-mode .dialogue,
+body.smooth-mode .menu-item,
+body.smooth-mode .tag,
+body.smooth-mode .overlay,
+body.smooth-mode .vn-cg-scrim,
+body.smooth-mode .slot,
+body.smooth-mode .panel {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-body.is-touch .dialogue { background: linear-gradient(180deg, rgba(9, 15, 28, .965), rgba(6, 10, 19, .985)); }
-body.is-touch .overlay { background: rgba(3, 6, 12, .9); }
-body.is-touch .vn-cg-scrim { background: rgba(3, 6, 12, .88); }
-body.is-touch .tag { background: rgba(10, 18, 32, .88); }
+body.smooth-mode .dialogue { background: linear-gradient(180deg, rgba(9, 15, 28, .965), rgba(6, 10, 19, .985)); }
+body.smooth-mode .overlay { background: rgba(3, 6, 12, .9); }
+body.smooth-mode .vn-cg-scrim { background: rgba(3, 6, 12, .88); }
+body.smooth-mode .tag { background: rgba(10, 18, 32, .88); }
 
-body.is-touch .char,
-body.is-touch .game-char,
-body.is-touch .char-wrap,
-body.is-touch .bg-ambient img,
-body.is-touch .boot-prompt,
-body.is-touch .vn-glow { animation: none; }
+body.smooth-mode .char,
+body.smooth-mode .game-char,
+body.smooth-mode .char-wrap,
+body.smooth-mode .bg-ambient img,
+body.smooth-mode .boot-prompt,
+body.smooth-mode .vn-glow { animation: none; }
 
-/* 横移镜头放慢一点，合成器压力更低 */
-body.is-touch .vn-bg.is-pan { animation-duration: 24s; }
+/* 不做横移镜头：那是持续时间最长的满屏变换 */
+body.smooth-mode .vn-bg.is-pan { animation: none; }
 
-/* 打字时文字每帧变化，配合去掉模糊后开销就只剩一小块文本区域 */
+/* 缩短交叉淡入（两张满屏图同时参与的帧数减半） */
+body.smooth-mode .vn-bg { transition-duration: .45s; }
+body.smooth-mode .vn-cg { transition-duration: .32s; }
+body.smooth-mode .vn-cg-frame { transition-duration: .32s; }

@@ -101,7 +101,8 @@
     sfxVolume: 60,
     sfxEnabled: true,
     bgmVolume: 40,
-    autoSave: true
+    autoSave: true,
+    smoothMode: null /* null = 按设备自动（触屏默认开） */
   };
 
   var current = null;
@@ -117,9 +118,14 @@
       var merged = this.defaults();
       if (saved && typeof saved === 'object') {
         Object.keys(DEFAULTS).forEach(function (k) {
+          if (k === 'smoothMode') {
+            if (typeof saved[k] === 'boolean') merged[k] = saved[k];
+            return;
+          }
           if (typeof saved[k] === typeof DEFAULTS[k]) merged[k] = saved[k];
         });
       }
+      /* smoothMode 保持 null = 自动（渲染时按设备判定），不在这里固化 */
       current = merged;
       return merged;
     },

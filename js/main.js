@@ -32,7 +32,7 @@
       'speaker', 'dialogue-text', 'caret', 'hud-chapter', 'hud-playtime', 'hud-line',
       'modal-slots', 'slots-title', 'slots-hint', 'slot-grid', 'auto-row', 'slots-storage', 'btn-wipe',
       'modal-settings', 'set-speed', 'set-speed-out', 'set-sfx', 'set-sfx-out', 'set-bgm',
-      'set-sfx-enabled', 'set-autosave', 'btn-fullscreen', 'btn-reset-settings',
+      'set-sfx-enabled', 'set-autosave', 'set-smooth', 'btn-fullscreen', 'btn-reset-settings',
       'modal-about', 'modal-confirm', 'confirm-title', 'confirm-message', 'confirm-ok', 'confirm-cancel',
       'toast-layer'
     ].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -45,6 +45,7 @@
     el['screen-title'].classList.toggle('is-active', name === 'title');
     el['screen-game'].classList.toggle('is-active', name === 'game');
     if (name === 'game') state.enterGameAt = Date.now();
+    document.body.classList.toggle('is-playing', name === 'game');
     if (dustApi) { if (name === 'title') dustApi.start(); else dustApi.stop(); }
     refreshTitleState();
   }
@@ -338,7 +339,20 @@
     el['set-bgm'].value = s.bgmVolume;
     el['set-sfx-enabled'].checked = !!s.sfxEnabled;
     el['set-autosave'].checked = !!s.autoSave;
+    applySmooth();               /* 顺带把 set-smooth 勾选同步成实际生效值 */
     updateFullscreenLabel();
+  }
+
+  /* 流畅模式（省电）：关掉每帧都在花钱的模糊 / 常驻动画 / 横移镜头，并缩短淡入。
+     未设置过（null）= 自动：触屏开、桌面关。实时判定，避免初始化顺序影响结果。 */
+  function applySmooth() {
+    var s = Settings.current();
+    var on = (s.smoothMode === null || s.smoothMode === undefined)
+      ? !!(GAL.Mobile && GAL.Mobile.isTouch)
+      : !!s.smoothMode;
+    document.body.classList.toggle('smooth-mode', on);
+    if (el['set-smooth']) el['set-smooth'].checked = on;
+    return on;
   }
 
   function updateFullscreenLabel() {
@@ -488,6 +502,15 @@
       Settings.set('autoSave', this.checked);
       GAL.toast(this.checked ? '已开启自动存档' : '已关闭自动存档', 'ok');
     });
+
+    var smooth = el['set-smooth'];
+    if (smooth) {
+      smooth.addEventListener('change', function () {
+        Settings.set('smoothMode', this.checked);
+        applySmooth();
+        GAL.toast(this.checked ? '流畅模式：开（更省电，关闭模糊与横移）' : '流畅模式：关（画面更华丽，但更耗电）', 'ok');
+      });
+    }
 
     el['btn-fullscreen'].addEventListener('click', function () {
       var doc = document;
@@ -735,6 +758,7 @@
     el['hud-playtime'].textContent = fmt.duration(0);
     /* 对外暴露给 vn.js / 脚本层使用 */
     GAL.openSettings = openSettings;
+    GAL.applySmooth = applySmooth;
     if (GAL.VN) GAL.VN.onFinish = goTitle;
     applyDebugHash();
   }
@@ -818,8 +842,19 @@
         var url = on2 ? on2.style.backgroundImage : '';
         log.push('图卡住时翻页: ' + (/bg-path/.test(url) ? 'PASS' : 'FAIL') + ' (' + url.slice(0, 46) + ')');
         global.Image = RealImage;
-        var failed = log.filter(function (l) { return l.indexOf('FAIL') > -1; }).length;
-        document.body.setAttribute('data-bgtest', 'FAILED=' + failed + ' || ' + log.join(' || '));
+
+        /* 3) 点"上一句"只能把状态倒回去，不能重放章节卡 / 白闪 */
+        GAL.VN.start('ch1', 13);
+        GAL.VN.back();
+        global.setTimeout(function () {
+          var card = document.getElementById('vn-card');
+          var flash = document.getElementById('vn-flash');
+          var bad = card.classList.contains('is-on') || flash.classList.contains('is-on');
+          log.push('上一句不重放章节卡/白闪: ' + (bad ? 'FAIL' : 'PASS'));
+
+          var failed = log.filter(function (l) { return l.indexOf('FAIL') > -1; }).length;
+          document.body.setAttribute('data-bgtest', 'FAILED=' + failed + ' || ' + log.join(' || '));
+        }, 400);
       }, 2000);
     }, 1500);
   }

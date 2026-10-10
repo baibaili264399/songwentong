@@ -36,9 +36,9 @@
         { card: '第一章', sub: '醒在别人的身体里', hold: 2000 },
         { bg: S + 'bg-bench-close.webp', pos: '50% 62%', dur: 1500 },
 
-        { text: '我去……，给我干哪来了……', who: '男主', kind: 'inner' },
+        { text: '我去……，给我干哪来了……', who: '主角', kind: 'inner' },
         { text: '一只手抬起来，死死按住太阳穴，眉头紧锁。', kind: 'action' },
-        { text: '头好疼……', who: '男主', kind: 'say' },
+        { text: '头好疼……', who: '主角', kind: 'say' },
 
         { bg: S + 'bg-path.webp', pos: '50% 55%', dur: 1400, pan: 'left' },
         { text: '缓缓抬起头，眼神恍惚，茫然地向四周来回观望。', kind: 'action' },
@@ -46,11 +46,11 @@
 
         { bg: S + 'bg-bench-close.webp', pos: '50% 58%', dur: 700, shake: 13 },
         { text: '刚刚扫视完周围，一阵强烈的眩晕再度袭来。', kind: 'narration' },
-        { text: '男主的身子轻轻一晃，后背重重靠住长椅靠背。', kind: 'action' },
+        { text: '主角的身子轻轻一晃，后背重重靠住长椅靠背。', kind: 'action' },
 
         { fx: 'glitch', dur: 900 },
-        { text: '不会吧……难道我穿越到刚刚打完的那款游戏里面了！？', who: '男主', kind: 'inner-strong' },
-        { text: '又头晕……', who: '男主', kind: 'inner' },
+        { text: '不会吧……难道我穿越到刚刚打完的那款游戏里面了！？', who: '主角', kind: 'inner-strong' },
+        { text: '又头晕……', who: '主角', kind: 'inner' },
 
         { cg: S + 'cg-phone-dark.webp', mode: 'inset', dur: 700 },
         { text: '慌忙伸手摸进口袋，掏出裤兜里的智能手机。拇指划开锁屏。', kind: 'action' },
@@ -59,7 +59,7 @@
 
         { cgOff: true },
         { flash: 'white', dur: 380 },
-        { text: '盯着屏幕上的时间，现实的记忆瞬间翻涌冲进脑海——', who: '男主', kind: 'inner' },
+        { text: '盯着屏幕上的时间，现实的记忆瞬间翻涌冲进脑海——', who: '主角', kind: 'inner' },
 
         { fx: 'flashbackOn' },
         { text: '深夜的出租屋，显示器幽幽的白光，通关字幕还在缓缓滚动。', kind: 'memory' },

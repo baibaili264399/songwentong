@@ -48,6 +48,8 @@
         body.classList.toggle('is-wechat', /MicroMessenger/i.test(global.navigator.userAgent || ''));
       } catch (e) { /* ignore */ }
       this.syncOrientation();
+      /* 触屏判定会影响"流畅模式"的自动值，通知主控重算（main.js 可能还没加载，存在才调） */
+      if (typeof GAL.applySmooth === 'function') GAL.applySmooth();
     },
 
     syncOrientation: function () {
