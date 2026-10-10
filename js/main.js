@@ -64,8 +64,8 @@
 
     if (el['side-latest']) {
       el['side-latest'].textContent = latest
-        ? '「' + Saves.label(latest.slot) + '」' + (latest.chapter || '') + ' · ' + fmt.date(latest.savedAt) + '（' + fmt.relative(latest.savedAt) + '）'
-        : '尚无存档记录 · 点击「开始游戏」进入序章';
+        ? '「' + Saves.label(latest.slot) + '」' + (latest.chapter || '') + ' · ' + fmt.date(latest.savedAt).slice(5)
+        : '尚无存档记录 · 点「开始游戏」开始';
     }
 
     if (el['foot-store']) {
@@ -172,18 +172,6 @@
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
 
-    var thumb = document.createElement('div');
-    thumb.className = 'slot-thumb';
-    if (data) {
-      var img = document.createElement('img');
-      img.src = 'assets/images/fish.png';
-      img.alt = '';
-      thumb.appendChild(img);
-    } else {
-      thumb.classList.add('is-none');
-      thumb.textContent = 'EMPTY';
-    }
-
     var info = document.createElement('div');
     info.className = 'slot-info';
 
@@ -232,7 +220,6 @@
       info.appendChild(tip);
     }
 
-    card.appendChild(thumb);
     card.appendChild(info);
 
     if (data && state.slotMode !== 'load') {

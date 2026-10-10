@@ -1,8 +1,8 @@
-# 《错位夜宵》· Galgame 原型 v0.2.0
+# 《错位夜宵》· Galgame 原型 v0.1.0
 
 无 H · 校园向 · 三主角攻略 + 回归现实真结局的 Galgame。
 当前进度：**主菜单 + 存档系统 + 手机端适配 + VN 演出引擎 + 第一章剧情实装**。
-立绘暂时仍用占位图**大肥鱼**（`assets/images/fish.png`）；背景与 CG 已换成你的实拍素材。
+标题立绘已换成正式角色图（透明底贴纸）；背景与 CG 为实拍素材。
 
 **线上地址**：https://baibaili264399.github.io/songwentong/ （GitHub Pages，手机可直接打开）
 
@@ -52,7 +52,10 @@ python -m http.server 8123
 ├─ js/vn.js                    **VN 演出引擎**（背景/CG/打字机/自动/跳过/回想/记录/特效）
 ├─ js/mobile.js                移动端适配：触屏识别 / 全屏横屏接管 / 竖屏提示
 ├─ js/main.js                  屏幕切换、菜单交互、存档面板、设置面板
-├─ assets/images/fish.png      占位立绘（大肥鱼），同时用作 PWA 图标
+├─ assets/images/mascot.webp   标题角色立绘（透明底，去水印）
+├─ assets/images/favicon.png   浏览器标签页图标（64²）
+├─ assets/images/icon-192.png  存档缩略图 / PWA 图标（192²）
+├─ assets/images/icon-512.png  PWA 大图标（512²）
 ├─ assets/scene/               实拍素材（背景 / CG，全部 WebP，17 张共 1.5MB）
 │   ├─ bg-room-night.webp      深夜出租屋 · 显示器幽光（前情提要）
 │   ├─ bg-bench-close.webp     第一人称坐在长椅上（开场）
@@ -81,7 +84,7 @@ python -m http.server 8123
 ## 三、本版本已实现
 
 **标题屏**
-- 标题 LOGO、氛围粒子背景、占位立绘（呼吸动画 + 鼠标视差 + 柔光遮罩）
+- 标题 LOGO、氛围粒子背景、标题角色立绘（呼吸动画 + 鼠标视差 + 柔光）
 - 菜单：开始游戏 / 继续游戏 / 读取存档 / 存档管理 / 游戏设置 / 关于本作
 - 「继续游戏」自动显示最近存档，无存档时置灰不可点
 - 键盘：`↑ ↓` 选择、`Enter` 确认、`Esc` 返回；鼠标悬停/点击有合成音效
@@ -200,10 +203,10 @@ C:\Users\陆世松\Desktop\错位夜宵\
 
 | 用途 | 现在 | 替换方式 |
 |------|------|----------|
-| 标题立绘 | `assets/images/fish.png`，`index.html` 中 `#title-char` | 换 src 即可，柔光遮罩与呼吸动画已写好 |
+| 标题立绘 | `assets/images/mascot.webp`（透明底贴纸），`index.html` 中 `#title-char` | 换 src 即可，发光与呼吸动画已写好 |
 | **剧情立绘** | 暂无（本章没有其他角色出场） | 把立绘 PNG 丢进 `assets/scene/`，脚本里加一步 `{ char: 'assets/scene/xxx.png' }` 即可，`.vn-chars` 层与 `setChar()` 已实现 |
 | 背景 / CG | `assets/scene/` 17 张实拍（WebP，共 1.5MB） | 直接换文件或改 `js/script.js` 里的路径；`pos` 控制裁切位置 |
-| 存档缩略图 | 仍是大肥鱼 | 后续接真实截图（`dataURL`） |
+| 存档缩略图 | `assets/images/icon-192.png` | 后续接真实截图（`dataURL`） |
 | BGM / 音效 | WebAudio 实时合成音效 | 接入后替换 BGM 音量通道 |
 
 ## 七、下一步（按你的节奏）

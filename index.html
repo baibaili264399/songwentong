@@ -12,8 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="错位夜宵" />
 <meta name="format-detection" content="telephone=no" />
 <link rel="manifest" href="manifest.json" />
-<link rel="apple-touch-icon" href="assets/images/fish.png" />
-<link rel="icon" href="assets/images/fish.png" />
+<link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="assets/images/favicon.png" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -22,7 +22,7 @@
 
     <!-- ============ 背景层 ============ -->
     <div class="bg-layer bg-base"></div>
-    <div class="bg-layer bg-ambient"><img src="assets/images/fish.png" alt="" /></div>
+    <div class="bg-layer bg-ambient"></div>
     <canvas class="bg-layer bg-dust" id="dust"></canvas>
     <div class="bg-layer bg-lines"></div>
     <div class="bg-layer bg-vignette"></div>
@@ -31,7 +31,7 @@
     <section class="screen screen-title is-active" id="screen-title">
 
       <div class="char-wrap" id="title-char-wrap">
-        <img class="char" id="title-char" src="assets/images/fish.png" alt="占位立绘（大肥鱼）" />
+        <img class="char" id="title-char" src="assets/images/mascot.webp" alt="标题角色立绘" />
       </div>
 
       <div class="title-block">
@@ -79,7 +79,7 @@
       </div>
 
       <footer class="stage-footer">
-        <span class="foot-item">v0.2.0 · 第一章实装</span>
+        <span class="foot-item">v0.1.0 · 第一章实装</span>
         <span class="foot-item foot-hint">
           <span class="hint-keyboard">↑ ↓ 选择 &nbsp;·&nbsp; Enter 确认 &nbsp;·&nbsp; Esc 返回</span>
           <span class="hint-touch">轻点选择菜单项 &nbsp;·&nbsp; 建议横屏全屏游玩</span>
@@ -238,23 +238,25 @@
       <div class="panel" role="dialog" aria-modal="true" aria-labelledby="about-title">
         <header class="panel-head">
           <div>
-            <h2 id="about-title">关于《错位夜宵》</h2>
-            <p class="panel-hint">无 H · 校园向 · 三主角攻略 + 回归现实真结局</p>
+            <h2 id="about-title">关于本作</h2>
           </div>
           <button class="panel-close" type="button" data-close aria-label="关闭">✕</button>
         </header>
         <div class="panel-body about-body">
-          <p class="about-lead">熬夜通关了一款小众治愈系 Galgame，用仅剩的 11.30 元点了一份 9.9 元拼好饭炸鸡——第一口下去，他附身到了那款游戏的原作主角身上。</p>
-          <ul class="about-list">
-            <li><b>主角</b>：双记忆并存（现实 + 原作人生 + 全剧情攻略记忆）；心底可看见模糊好感提示；改动关键剧情会触发世界震荡 BUG；世界意志以梦境碎片暗示，无直接对话。</li>
-            <li><b>可攻略角色</b>：郑桐（创伤温柔 · 社会学）、江灼（双重人格 · 新闻传播）、阿松（社恐电子幽灵 · 计算机）。</li>
-            <li><b>舞台</b>：一所综合性大学——教室、走廊、图书馆、计算中心、体育场、大礼堂、宿舍、食堂、小卖部、雷锋雕像广场、健身楼、校内石桥。</li>
-            <li><b>结局</b>：TRUE END【回归现实】 / STAY END【留下】，另有三条角色 BE。</li>
-          </ul>
-          <p class="about-note">当前版本 v0.1.0：仅完成主菜单、存档系统与占位演出。立绘 / 背景 / BGM 均以占位图（大肥鱼）顶替。</p>
+          <dl class="about-credits">
+            <div class="about-row"><dt>主创</dt><dd>松松　小帅</dd></div>
+            <div class="about-row"><dt>文案</dt><dd>小帅　松松</dd></div>
+            <div class="about-row"><dt>重大参与者</dt><dd>桐桐</dd></div>
+          </dl>
+
+          <div class="about-join">
+            <p class="about-join-title">想参与一起制作、出镜</p>
+            <p class="about-join-line">vx：<b>bestY264399</b>　（备注来意）</p>
+            <p class="about-join-note">目前正处于起步，还是满缺人手的！可以留名喔！</p>
+          </div>
         </div>
         <footer class="panel-foot">
-          <span class="storage-note">下一步：第一章 完整剧情 + 三位角色初遇脚本</span>
+          <span class="storage-note">当前版本：v0.1.0</span>
           <button class="btn" type="button" data-close>返回</button>
         </footer>
       </div>
@@ -312,7 +314,7 @@
     <div class="boot" id="boot">
       <div class="boot-inner">
         <p class="boot-title">错位夜宵</p>
-        <p class="boot-sub">GALGAME PROTOTYPE v0.2.0</p>
+        <p class="boot-sub">GALGAME PROTOTYPE v0.1.0</p>
         <p class="boot-prompt">点击画面开始</p>
         <p class="boot-note hint-keyboard">点击任意位置进入 · 支持键盘操作</p>
         <p class="boot-note hint-touch">将自动进入横屏全屏 · 请把手机横过来</p>
