@@ -2,8 +2,18 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>错位夜宵 · Galgame 主菜单</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>错位夜宵 · Galgame</title>
+<meta name="description" content="无 H · 校园向 · 三男主攻略 + 回归现实真结局的 Galgame" />
+<meta name="theme-color" content="#04060b" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="错位夜宵" />
+<meta name="format-detection" content="telephone=no" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="assets/images/fish.png" />
+<link rel="icon" href="assets/images/fish.png" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -69,35 +79,79 @@
       </div>
 
       <footer class="stage-footer">
-        <span class="foot-item">v0.1.0 · 主菜单原型</span>
-        <span class="foot-item foot-hint">↑ ↓ 选择 &nbsp;·&nbsp; Enter 确认 &nbsp;·&nbsp; Esc 返回</span>
+        <span class="foot-item">v0.2.0 · 第一章实装</span>
+        <span class="foot-item foot-hint">
+          <span class="hint-keyboard">↑ ↓ 选择 &nbsp;·&nbsp; Enter 确认 &nbsp;·&nbsp; Esc 返回</span>
+          <span class="hint-touch">轻点选择菜单项 &nbsp;·&nbsp; 建议横屏全屏游玩</span>
+        </span>
         <span class="foot-item foot-store" id="foot-store">存储：检测中…</span>
       </footer>
     </section>
 
-    <!-- ============ 游戏屏（占位 · 用于打通存读档） ============ -->
-    <section class="screen screen-game" id="screen-game">
-      <div class="game-bg"><img src="assets/images/fish.png" alt="" /></div>
+    <!-- ============ 剧情屏（VN 演出） ============ -->
+    <section class="screen screen-game screen-vn" id="screen-game">
+
+      <!-- 背景双层交叉淡入 -->
+      <div class="vn-bg" id="vn-bg-a"></div>
+      <div class="vn-bg" id="vn-bg-b"></div>
+      <div class="vn-scrim"></div>
+
+      <!-- 立绘层（有角色时才出现，目前占位） -->
+      <div class="vn-chars" id="vn-chars"></div>
+
+      <!-- CG 特写层 -->
+      <div class="vn-cg" id="vn-cg" data-mode="inset">
+        <div class="vn-cg-scrim"></div>
+        <div class="vn-cg-frame"><img id="vn-cg-img" alt="" /></div>
+      </div>
+
+      <!-- 特效层 -->
+      <div class="vn-flashback" id="vn-flashback"></div>
+      <div class="vn-glitch" id="vn-glitch"></div>
+      <div class="vn-glow" id="vn-glow"></div>
+      <div class="vn-flash" id="vn-flash" data-color="white"></div>
+
+      <!-- 顶部信息 -->
       <div class="game-topbar">
-        <span class="tag" id="hud-chapter">序章 · 错位夜宵</span>
+        <span class="tag" id="hud-chapter">第一章 · 醒在别人的身体里</span>
         <span class="tag" id="hud-playtime">00:00:00</span>
         <span class="tag tag-ghost" id="hud-line">0 / 0</span>
       </div>
 
-      <img class="game-char" id="game-char" src="assets/images/fish.png" alt="占位立绘（大肥鱼）" />
+      <!-- 章节卡 -->
+      <div class="vn-card" id="vn-card">
+        <p class="vn-card-title" id="vn-card-title"></p>
+        <p class="vn-card-sub" id="vn-card-sub"></p>
+      </div>
 
-      <div class="dialogue" id="dialogue">
+      <!-- 右侧竖排按钮 -->
+      <div class="vn-side">
+        <button class="vn-side-btn" type="button" data-action="vn-repeat"><b>回想</b><span>REPEAT</span></button>
+        <button class="vn-side-btn" type="button" data-action="vn-auto"><b>自动</b><span>AUTO</span></button>
+        <button class="vn-side-btn" type="button" data-action="vn-skip"><b>跳过</b><span>SKIP</span></button>
+        <button class="vn-side-btn" type="button" data-action="vn-config"><b>设置</b><span>CONFIG</span></button>
+      </div>
+
+      <!-- 左右翻页箭头 -->
+      <button class="vn-arrow is-left" type="button" data-action="vn-back" aria-label="上一句">‹</button>
+      <button class="vn-arrow is-right" type="button" data-action="vn-forward" aria-label="下一句">›</button>
+
+      <!-- 对话框 -->
+      <div class="dialogue vn-box" id="vn-box" data-kind="say">
         <div class="name-box" id="speaker">男主</div>
         <div class="text-box">
           <span id="dialogue-text"></span><span class="caret" id="caret">▼</span>
         </div>
-        <p class="dialogue-note">（点击画面推进对话 &nbsp;·&nbsp; Esc 返回标题）</p>
       </div>
 
-      <div class="game-hud">
-        <button class="btn" type="button" data-action="game-save">存档 <kbd>S</kbd></button>
-        <button class="btn" type="button" data-action="game-load">读档 <kbd>L</kbd></button>
-        <button class="btn btn-ghost" type="button" data-action="to-title">返回标题 <kbd>Esc</kbd></button>
+      <!-- 底部按钮行 -->
+      <div class="vn-bar">
+        <button class="vn-tab" type="button" data-action="vn-qload">快读</button>
+        <button class="vn-tab" type="button" data-action="vn-qsave">快存</button>
+        <button class="vn-tab" type="button" data-action="game-load">读档</button>
+        <button class="vn-tab" type="button" data-action="game-save">存档</button>
+        <button class="vn-tab" type="button" data-action="vn-log">记录</button>
+        <button class="vn-tab vn-tab-ghost" type="button" data-action="to-title">标题</button>
       </div>
     </section>
 
@@ -224,6 +278,24 @@
       </div>
     </div>
 
+    <!-- ============ 覆盖层：剧情记录 LOG ============ -->
+    <div class="overlay" id="modal-log" data-overlay>
+      <div class="panel panel-wide" role="dialog" aria-modal="true" aria-labelledby="log-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="log-title">剧情记录</h2>
+            <p class="panel-hint">本章已读过的台词</p>
+          </div>
+          <button class="panel-close" type="button" data-close aria-label="关闭">✕</button>
+        </header>
+        <div class="panel-body log-body" id="log-body"></div>
+        <footer class="panel-foot">
+          <span class="storage-note">越靠下越新</span>
+          <button class="btn" type="button" data-close>返回</button>
+        </footer>
+      </div>
+    </div>
+
     <!-- ============ Toast ============ -->
     <div class="toast-layer" id="toast-layer"></div>
 
@@ -231,16 +303,32 @@
     <div class="boot" id="boot">
       <div class="boot-inner">
         <p class="boot-title">错位夜宵</p>
-        <p class="boot-sub">GALGAME PROTOTYPE v0.1.0</p>
+        <p class="boot-sub">GALGAME PROTOTYPE v0.2.0</p>
         <p class="boot-prompt">点击画面开始</p>
+        <p class="boot-note hint-keyboard">点击任意位置进入 · 支持键盘操作</p>
+        <p class="boot-note hint-touch">将自动进入横屏全屏 · 请把手机横过来</p>
       </div>
     </div>
 
+  </div>
+
+  <!-- ============ 竖屏提示（iOS 无法强制横屏时的兜底） ============ -->
+  <div class="rotate-hint" id="rotate-hint">
+    <div class="rotate-inner">
+      <div class="rotate-phone" aria-hidden="true"></div>
+      <p class="rotate-title">请把手机横过来</p>
+      <p class="rotate-text">本作按 16:9 横屏设计，竖屏下字太小、按钮也点不准。点击下方按钮可进入横屏全屏；iPhone 可在「分享 → 添加到主屏幕」后获得真正的横屏全屏。</p>
+      <button class="rotate-btn" type="button">点击进入横屏全屏</button>
+      <button class="rotate-skip" type="button" data-rotate-skip>仍然竖屏继续</button>
+    </div>
   </div>
 </div>
 
 <script src="js/core.js"></script>
 <script src="js/saves.js"></script>
+<script src="js/script.js"></script>
+<script src="js/vn.js"></script>
+<script src="js/mobile.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

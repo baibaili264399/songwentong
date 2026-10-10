@@ -1,6 +1,6 @@
 /* ============================================================
    《错位夜宵》存档 / 设置数据层
-   存档位：auto（自动存档） + 1~6（手动存档）
+   存档位：auto（自动存档） + quick（快速存档） + 1~6（手动存档）
    ============================================================ */
 (function (global) {
   'use strict';
@@ -9,13 +9,17 @@
   /* ---------------- 存档 ---------------- */
   var SAVE_KEY = 'gal.saves.v1';
   var MANUAL_SLOTS = ['1', '2', '3', '4', '5', '6'];
+  var SPECIAL_SLOTS = ['auto', 'quick'];
 
   var Saves = {
-    allSlots: ['auto'].concat(MANUAL_SLOTS),
+    allSlots: SPECIAL_SLOTS.concat(MANUAL_SLOTS),
+    specialSlots: SPECIAL_SLOTS.slice(),
     manualSlots: MANUAL_SLOTS.slice(),
 
     label: function (id) {
-      return id === 'auto' ? '自动存档' : '存档 ' + id;
+      if (id === 'auto') return '自动存档';
+      if (id === 'quick') return '快速存档';
+      return '存档 ' + id;
     },
 
     all: function () {
@@ -44,7 +48,10 @@
       var entry = {
         slot: id,
         seq: maxSeq + 1,          /* 单调递增序号：同毫秒内存档也能正确判定先后 */
-        chapter: payload.chapter || '序章 · 错位夜宵',
+        chapterId: payload.chapterId || payload.scene || 'ch1',
+        step: typeof payload.step === 'number' ? payload.step : 0,
+        kind: payload.kind || '',
+        chapter: payload.chapter || '第一章 · 醒在别人的身体里',
         speaker: payload.speaker || '',
         text: payload.text || '',
         line: typeof payload.line === 'number' ? payload.line : 0,

@@ -1,0 +1,20 @@
+{
+  "name": "错位夜宵 · Galgame",
+  "short_name": "错位夜宵",
+  "description": "无 H · 校园向 · 三男主攻略 + 回归现实真结局的 Galgame",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#04060b",
+  "theme_color": "#04060b",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "assets/images/fish.png",
+      "sizes": "246x252",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

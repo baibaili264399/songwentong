@@ -7,25 +7,7 @@
   var $ = GAL.$, $$ = GAL.$$;
   var Sfx = GAL.Sfx, Modal = GAL.Modal, Saves = GAL.Saves, Settings = GAL.Settings, fmt = GAL.fmt;
 
-  /* ---------------- 序章占位剧本（正式脚本见 docs/序章脚本.md） ---------------- */
-  var SCRIPT = {
-    chapter: '序章 · 错位夜宵',
-    lines: [
-      { speaker: '男主', text: '「呼……终于通关了。」' },
-      { speaker: '男主', text: '熬到这个点，眼睛都快睁不开了。向后靠在电竞椅上，长长伸一个懒腰——骨头咔咔响。' },
-      { speaker: '',     text: '（肚子「咕——」地响了一声。深夜的房间只剩显示器幽幽的白光。）' },
-      { speaker: '男主', text: '「好饿。看看余额还剩多少……」' },
-      { speaker: '男主', text: '「11.30 元。……行吧，就那个 9.9 的拼好饭炸鸡套餐。」' },
-      { speaker: '',     text: '（点击下单。画面慢慢变黑，黑屏转场，跳过外卖等待的几十分钟。）' },
-      { speaker: '',     text: '（深夜楼道，手电筒的微光。拖鞋声、塑料袋沙沙声。回房，关门。）' },
-      { speaker: '男主', text: '（撕开包装，迫不及待咬下一大口。很香，很脆——）' },
-      { speaker: '',     text: '（突如其来的刺耳耳鸣灌满大脑！世界色彩瞬间扭曲、错位、撕裂，眩晕砸落意识。）' },
-      { speaker: '男主', text: '「啊——！」' },
-      { speaker: '',     text: '【穿越完成】短暂黑暗后，温柔的光、微风、树叶沙沙声缓慢填满视野。' },
-      { speaker: '男主', text: '（内心震炸裂）不是做梦……我附身到「我刚刚通关的 Galgame」的原作男主身上了？！' },
-      { speaker: '旁白', text: '—— 序章结束。第一章「校园日常」尚在制作中，本版本先把主菜单与存档系统跑通。' }
-    ]
-  };
+  /* ---------------- 剧本已迁移到 js/script.js（GAL.Chapters），演出由 js/vn.js 负责 ---------------- */
 
   /* ---------------- 运行时状态 ---------------- */
   var state = {
@@ -46,7 +28,7 @@
   function cacheEls() {
     [
       'stage', 'screen-title', 'screen-game', 'main-menu', 'side-latest', 'foot-store',
-      'dust', 'boot', 'title-char-wrap', 'game-char', 'dialogue',
+      'dust', 'boot', 'title-char-wrap', 'vn-box',
       'speaker', 'dialogue-text', 'caret', 'hud-chapter', 'hud-playtime', 'hud-line',
       'modal-slots', 'slots-title', 'slots-hint', 'slot-grid', 'auto-row', 'slots-storage', 'btn-wipe',
       'modal-settings', 'set-speed', 'set-speed-out', 'set-sfx', 'set-sfx-out', 'set-bgm',
@@ -59,12 +41,10 @@
   /* ---------------- 屏幕切换 ---------------- */
   function setScreen(name) {
     state.screen = name;
+    if (name !== 'game' && GAL.VN) GAL.VN.pause();
     el['screen-title'].classList.toggle('is-active', name === 'title');
     el['screen-game'].classList.toggle('is-active', name === 'game');
-    if (name === 'game') {
-      state.enterGameAt = Date.now();
-      autosave(true);
-    }
+    if (name === 'game') state.enterGameAt = Date.now();
     refreshTitleState();
   }
 
@@ -93,77 +73,26 @@
     }
   }
 
-  /* ---------------- 对话演出 ---------------- */
-  function typeText(text) {
-    var node = el['dialogue-text'];
-    global.clearTimeout(state.typeTimer);
-    node.textContent = '';
-    state.fullText = text;
-    el['caret'].classList.remove('is-on');
+  /* ---------------- 对话演出（由 js/vn.js 演出引擎接管） ---------------- */
+  function vn() { return GAL.VN; }
 
-    var delay = GAL.textDelay();
-    if (delay <= 0) { node.textContent = text; state.typing = false; el['caret'].classList.add('is-on'); return; }
-
-    state.typing = true;
-    var i = 0, tick = 0;
-    (function step() {
-      if (i >= text.length) { state.typing = false; el['caret'].classList.add('is-on'); return; }
-      node.textContent += text.charAt(i++);
-      if (++tick % 4 === 0) Sfx.type();
-      state.typeTimer = global.setTimeout(step, delay);
-    })();
-  }
-
-  function finishTyping() {
-    global.clearTimeout(state.typeTimer);
-    el['dialogue-text'].textContent = state.fullText;
-    state.typing = false;
-    el['caret'].classList.add('is-on');
-  }
-
-  function showLine(index) {
-    var line = SCRIPT.lines[index];
-    if (!line) return;
-    state.line = index;
-
-    el['hud-chapter'].textContent = SCRIPT.chapter;
-    el['hud-line'].textContent = (index + 1) + ' / ' + SCRIPT.lines.length;
-
-    var speaker = el['speaker'];
-    if (line.speaker) {
-      speaker.textContent = line.speaker;
-      speaker.classList.remove('is-hidden');
-    } else {
-      speaker.textContent = '';
-      speaker.classList.add('is-hidden');
-    }
-    typeText(line.text);
+  function startChapter(chapterId, step) {
+    if (!vn()) { GAL.toast('演出引擎未加载', 'error'); return; }
+    setScreen('game');
+    vn().start(chapterId || (GAL.chapterOrder || ['ch1'])[0], step);
+    autosave(true);
   }
 
   function advance() {
     if (Modal.isOpen()) return;
-    if (state.typing) { finishTyping(); return; }
-    if (state.line + 1 < SCRIPT.lines.length) {
-      showLine(state.line + 1);
-    } else {
-      Sfx.error();
-      GAL.toast('第一章尚未制作，先回标题继续打磨菜单吧', 'warn');
-    }
+    if (vn()) vn().advance();
   }
 
   /* ---------------- 存档读写 ---------------- */
   function currentPayload() {
-    var line = SCRIPT.lines[state.line] || {};
-    return {
-      chapter: SCRIPT.chapter,
-      speaker: line.speaker || '',
-      text: line.text || '',
-      line: state.line,
-      total: SCRIPT.lines.length,
-      progress: (state.line + 1) / SCRIPT.lines.length,
-      playtime: state.playtime,
-      scene: 'prologue'
-    };
+    var s = vn() ? vn().saveState() : {};
+    s.playtime = state.playtime;
+    return s;
   }
 
   function doSave(id, silent) {
@@ -185,6 +114,7 @@
   function autosave(silent) {
     if (!Settings.current().autoSave) return;
     if (state.screen !== 'game') return;
+    if (vn() && vn().isEnded()) return;
     Saves.write('auto', currentPayload());
     refreshTitleState();
     if (!silent) GAL.toast('已自动存档', 'ok');
@@ -195,10 +125,8 @@
     if (!data) { Sfx.error(); GAL.toast('该存档位是空的', 'warn'); return; }
     Sfx.confirm();
     Modal.closeAll();
-    state.line = Math.max(0, Math.min(data.line || 0, SCRIPT.lines.length - 1));
     state.playtime = data.playtime || 0;
-    setScreen('game');
-    showLine(state.line);
+    startChapter(data.chapterId || data.scene || 'ch1', data.step || 0);
     GAL.toast('已读取「' + Saves.label(id) + '」 · ' + fmt.date(data.savedAt), 'ok');
   }
 
@@ -221,11 +149,11 @@
       ? '选择存档位写入当前进度（会覆盖该位原有数据）'
       : (isManage ? '点击存档位可展开详情，点击右上角 ✕ 删除该存档' : '选择一个存档位载入进度');
     el['slots-storage'].textContent = GAL.store.isPersistent()
-      ? '存档位置：浏览器本地存储 · 自动 1 位 + 手动 6 位'
+      ? '存档位置：浏览器本地存储 · 自动 1 位 + 快速 1 位 + 手动 6 位'
       : '⚠ 本地存储不可用，本次进度仅保留在当前页面';
 
     el['auto-row'].textContent = '';
-    el['auto-row'].appendChild(buildSlot('auto'));
+    Saves.specialSlots.forEach(function (id) { el['auto-row'].appendChild(buildSlot(id)); });
 
     el['slot-grid'].textContent = '';
     Saves.manualSlots.forEach(function (id) { el['slot-grid'].appendChild(buildSlot(id)); });
@@ -234,6 +162,7 @@
   function buildSlot(id) {
     var data = Saves.get(id);
     var isAuto = id === 'auto';
+    var isQuick = id === 'quick';
 
     var card = document.createElement('div');
     card.className = 'slot' + (data ? '' : ' is-empty');
@@ -259,10 +188,10 @@
     var name = document.createElement('div');
     name.className = 'slot-name';
     name.textContent = Saves.label(id);
-    if (isAuto) {
+    if (isAuto || isQuick) {
       var badge = document.createElement('span');
-      badge.className = 'badge';
-      badge.textContent = 'AUTO';
+      badge.className = 'badge' + (isQuick ? ' badge-quick' : '');
+      badge.textContent = isAuto ? 'AUTO' : 'QUICK';
       name.appendChild(badge);
     }
     info.appendChild(name);
@@ -420,11 +349,8 @@
   var actions = {
     'new': function () {
       Sfx.confirm();
-      state.line = 0;
       state.playtime = 0;
-      setScreen('game');
-      showLine(0);
-      GAL.toast('开始新游戏 · 序章「错位夜宵」', 'ok');
+      startChapter('ch1', 0);
     },
     'continue': function () {
       var latest = Saves.latest();
@@ -433,15 +359,34 @@
     },
     'load': function () { openSlots('load'); },
     'slots': function () { openSlots('manage'); },
-    'settings': function () { Sfx.click(); applySettingsToUI(); Modal.open('modal-settings'); },
+    'settings': function () { openSettings(); },
     'about': function () { Sfx.confirm(); Modal.open('modal-about'); },
     'game-save': function () { openSlots('save'); },
     'game-load': function () { openSlots('load'); },
-    'to-title': function () { goTitle(); }
+    'to-title': function () { goTitle(); },
+    /* 快速存读档 → 独立 quick 存档位 */
+    'vn-qsave': function () {
+      if (state.screen !== 'game') { Sfx.error(); GAL.toast('当前没有进行中的游戏', 'warn'); return; }
+      doSave('quick');
+    },
+    'vn-qload': function () {
+      if (!Saves.get('quick')) { Sfx.error(); GAL.toast('还没有快速存档', 'warn'); return; }
+      loadSlot('quick');
+    }
   };
 
+  function openSettings() {
+    Sfx.click();
+    if (vn()) vn().pause();
+    applySettingsToUI();
+    Modal.open('modal-settings');
+  }
+
   function goTitle() {
-    if (state.screen === 'game') autosave(false);
+    if (state.screen === 'game') {
+      if (vn()) vn().pause();
+      autosave(false);
+    }
     Sfx.cancel();
     Modal.closeAll();
     setScreen('title');
@@ -453,7 +398,8 @@
     el['stage'].addEventListener('click', function (e) {
       var trigger = e.target.closest('[data-action]');
       if (!trigger || trigger.disabled) return;
-      var fn = actions[trigger.getAttribute('data-action')];
+      var name = trigger.getAttribute('data-action');
+      var fn = actions[name] || (GAL.VN && GAL.VN.actions ? GAL.VN.actions[name] : null);
       if (fn) fn();
     });
 
@@ -473,10 +419,6 @@
     el['screen-game'].addEventListener('click', function (e) {
       if (e.target.closest('[data-action]')) return;
       advance();
-    });
-    el['screen-game'].addEventListener('mousedown', function () {
-      el['screen-game'].classList.add('is-advancing');
-      global.setTimeout(function () { el['screen-game'].classList.remove('is-advancing'); }, 160);
     });
   }
 
@@ -616,8 +558,12 @@
 
       if (state.screen === 'game') {
         if (key === 'Enter' || key === ' ' || key === 'ArrowRight') { e.preventDefault(); advance(); }
+        else if (key === 'ArrowLeft') { e.preventDefault(); if (vn()) vn().back(); }
         else if (key === 's' || key === 'S') { e.preventDefault(); openSlots('save'); }
         else if (key === 'l' || key === 'L') { e.preventDefault(); openSlots('load'); }
+        else if (key === 'a' || key === 'A') { e.preventDefault(); if (vn()) vn().toggleAuto(); }
+        else if (key === 'k' || key === 'K') { e.preventDefault(); if (vn()) vn().toggleSkip(); }
+        else if (key === 'h' || key === 'H') { e.preventDefault(); if (vn()) vn().actions['vn-log'](); }
       }
     });
   }
@@ -714,6 +660,8 @@
     state.booted = true;
     Sfx.unlock();
     Sfx.confirm();
+    /* 移动端：借这次真实用户手势进入全屏并尝试锁定横屏（必须在手势回调里调用） */
+    if (GAL.Mobile) GAL.Mobile.requestImmersive();
     el['boot'].classList.add('is-hidden');
     global.setTimeout(function () { el['boot'].style.display = 'none'; }, 700);
     if (!GAL.store.isPersistent()) {
@@ -748,18 +696,54 @@
     bindBoot();
     refreshTitleState();
     el['hud-playtime'].textContent = fmt.duration(0);
+    /* 对外暴露给 vn.js / 脚本层使用 */
+    GAL.openSettings = openSettings;
+    if (GAL.VN) GAL.VN.onFinish = goTitle;
     applyDebugHash();
   }
 
-  /* 开发用锚点：#skipboot / #game / #save / #load / #manage / #settings / #about / #selftest */
+  /* 开发用锚点（用 '-' 组合）：
+       mobile / desktop  强制环境（用于在桌面浏览器预览手机布局）
+       fit               把舞台钉成固定 880px 宽，便于在任意窗口里截手机版布局图
+       stepN             直接从第一章第 N 步开始（截某一幕用），例如 step12
+       其余：skipboot / game / save / load / manage / settings / about / selftest / measure
+     例：#mobile-fit-step12 = 手机布局 + 固定舞台 + 跳到第 12 步 */
   function applyDebugHash() {
-    var hash = (global.location.hash || '').replace('#', '');
-    if (!hash) return;
+    var raw = (global.location.hash || '').replace('#', '');
+    if (!raw) return;
     document.documentElement.classList.add('gal-shot'); /* 关闭过渡，便于静态截图 */
+
+    var parts = raw.split('-');
+    var wantFit = parts.indexOf('fit') >= 0;
+    parts = parts.filter(function (p) { return p !== 'fit'; });
+
+    if (parts[0] === 'mobile') { if (GAL.Mobile) GAL.Mobile.force('mobile'); parts.shift(); }
+    else if (parts[0] === 'desktop') { if (GAL.Mobile) GAL.Mobile.force('desktop'); parts.shift(); }
+
+    var hash = parts.join('-') || 'skipboot';
+    if (wantFit) el['stage'].style.setProperty('--sw', '880px');
+
+    var stepMatch = /^step(\d+)$/.exec(hash);
+    var jumpStep = stepMatch ? parseInt(stepMatch[1], 10) : null;
+
     global.setTimeout(function () {
       enterBoot();
       if (hash === 'selftest') { runSelfTest(); return; }
+      if (hash === 'measure') { measureLayout(); return; }
+      if (jumpStep !== null) { startChapter('ch1', jumpStep); return; }
       if (hash === 'game') actions['new']();
+      else if (hash === 'log') {
+        var spd = Settings.current().textSpeed;
+        Settings.set('textSpeed', 100);
+        actions['new']();
+        for (var i = 0; i < 8; i++) if (GAL.VN) GAL.VN.advance();
+        Settings.set('textSpeed', spd);
+        if (GAL.VN) {
+          GAL.VN.actions['vn-log']();
+          document.body.setAttribute('data-loglen', String(GAL.VN.state.log.length));
+          document.body.setAttribute('data-logfirst', (GAL.VN.state.log[0] || {}).text || '(空)');
+        }
+      }
       else if (hash === 'save') openSlots('save');
       else if (hash === 'load') openSlots('load');
       else if (hash === 'manage') openSlots('manage');
@@ -768,40 +752,84 @@
     }, 60);
   }
 
-  /* 端到端自检：校验存档 / 读档 / 设置链路（结果写入 body[data-selftest]） */
+  /* 布局量测（开发用）：把关键元素的实际几何写进 body[data-measure] */
+  function measureLayout() {
+    var report = {
+      viewport: global.innerWidth + 'x' + global.innerHeight,
+      bodyClass: document.body.className,
+      stageW: Math.round(el['stage'].getBoundingClientRect().width)
+    };
+    [['#rotate-hint', 'hint'], ['.rotate-inner', 'inner'], ['.rotate-text', 'text'],
+     ['.menu', 'menu'], ['.menu-item', 'menuItem'], ['.text-box', 'textbox'],
+     ['.panel-wide', 'panelWide']].forEach(function (pair) {
+      var node = document.querySelector(pair[0]);
+      if (!node) { report[pair[1]] = 'none'; return; }
+      var r = node.getBoundingClientRect();
+      var cs = global.getComputedStyle(node);
+      report[pair[1]] = Math.round(r.width) + 'x' + Math.round(r.height)
+        + '@' + Math.round(r.left) + ',' + Math.round(r.top)
+        + ' fs=' + cs.fontSize + ' disp=' + cs.display;
+    });
+    document.body.setAttribute('data-measure', JSON.stringify(report));
+  }
+
+  /* 端到端自检：校验剧情推进 / 存档 / 读档 / 设置链路（结果写入 body[data-selftest]） */
   function runSelfTest() {
     var log = [];
     function check(name, cond) { log.push((cond ? 'PASS' : 'FAIL') + ' :: ' + name); }
+    var V = GAL.VN;
 
+    Settings.set('textSpeed', 100);          /* 瞬显，保证推进是同步的 */
     Saves.clear();
     check('清空后无存档', Saves.count() === 0 && !Saves.latest());
+    check('剧本已加载', !!(GAL.Chapters && GAL.Chapters.ch1 && GAL.Chapters.ch1.steps.length > 10));
 
     actions['new']();
-    check('开始游戏后自动存档已写入', !!Saves.get('auto') && state.line === 0);
+    check('开始游戏后进入第一章', V.state.chapterId === 'ch1' && state.screen === 'game');
+    check('进入后自动存档已写入', !!Saves.get('auto'));
 
-    state.line = 3;
-    Saves.write('3', currentPayload());
-    check('手动存档写入 slot3', !!Saves.get('3') && Saves.get('3').line === 3);
-    check('存档总数 = 2', Saves.count() === 2);
-    check('latest 指向最新存档', (Saves.latest() || {}).slot === '3');
+    var start = V.state.index;
+    V.advance(); V.advance(); V.advance();
+    var at = V.state.index;
+    check('点击可推进剧情', at > start);
 
-    state.line = 0;
+    var payload = currentPayload();
+    check('存档负载含章节与步号', payload.chapterId === 'ch1' && typeof payload.step === 'number' && payload.total > 0);
+
+    Saves.write('3', payload);
+    check('手动存档写入 slot3', !!Saves.get('3') && Saves.get('3').step === at);
+
+    V.start('ch1', 0);
+    var head = V.state.steps[V.state.index] || {};
+    check('重置到章节开头（前情提要那一句）', V.state.index < at && head.who === '前情提要');
     loadSlot('3');
-    check('读档后回到第 4 句', state.line === 3 && state.screen === 'game');
+    check('读档回到保存的那一步', V.state.index === at && state.screen === 'game');
 
-    autosave(false);
-    check('自动存档覆盖 auto', (Saves.get('auto') || {}).line === 3);
+    actions['vn-qsave']();
+    check('快速存档写入 quick', !!Saves.get('quick'));
+    check('存档总数 = 3（auto/quick/3）', Saves.count() === 3);
+    check('latest 指向最新存档', (Saves.latest() || {}).slot === 'quick');
+
+    V.setAuto(true);
+    V.setSkip(true);
+    check('自动/跳过互斥', V.state.skip === true && V.state.auto === false);
+    V.setSkip(false);
+
+    V.state.index = 0;
+    V.repeat();
+    V.advance();
+    check('回想与推进不报错', V.state.index > 0);
 
     Saves.remove('3');
-    check('删除存档 slot3', !Saves.get('3') && Saves.count() === 1);
+    check('删除存档 slot3', !Saves.get('3') && Saves.count() === 2);
 
-    Settings.set('textSpeed', 100);
     check('设置写入且瞬显生效', Settings.current().textSpeed === 100 && GAL.textDelay() === 0);
     Settings.reset();
     check('恢复默认设置', Settings.current().textSpeed === 55 && GAL.textDelay() > 0);
 
     Saves.clear();
     check('清空全部存档', Saves.count() === 0 && !Saves.latest());
+    V.pause();
     setScreen('title');
 
     var failed = log.filter(function (l) { return l.indexOf('FAIL') === 0; }).length;
@@ -814,5 +842,5 @@
     init();
   }
 
-  GAL.debug = { state: state, SCRIPT: SCRIPT, Saves: Saves };
+  GAL.debug = { state: state, Saves: Saves, VN: GAL.VN };
 })(window);
